@@ -1,13 +1,3 @@
-// WHEN I choose to view all employees
-// THEN I am presented with a formatted table showing employee data, including employee ids, first names, last names, job titles, departments, salaries, and managers that the employees report to
-
-
-// WHEN I choose to add an employee
-// THEN I am prompted to enter the employee’s first name, last name, role, and manager, and that employee is added to the database
-// WHEN I choose to update an employee role
-// THEN I am prompted to select an employee to update and their new role and this information is updated in the database
-
-
 const inquirer = require("inquirer");
 const db = require('./db/connection');
 
@@ -60,6 +50,9 @@ const startPrompt = () => {
     });
 };
 
+
+// Functions to view tables for departments, roles, and employees 
+
 function viewDepartments() {
   const sql = `SELECT * FROM departments`;
   db.query(sql, (err, res) => {
@@ -70,7 +63,10 @@ function viewDepartments() {
 };
 
 function viewRoles() {
-  const sql = `SELECT roles.id, roles.title, departments.department_name AS department, roles.salary FROM roles 
+  const sql = `SELECT roles.id, 
+                      roles.title, 
+                      departments.department_name AS department, 
+                      roles.salary FROM roles 
               LEFT JOIN departments ON department_id = departments.id`;
   db.query(sql, (err, res) => {
     if (err) throw err;
@@ -85,16 +81,20 @@ function viewEmployees() {
                       roles.title, 
                       roles.salary, 
                       departments.department_name AS department, 
-                      employees.manager_id
+                      CONCAT(manager.first_name, ' ', manager.last_name) AS manager
                       FROM employees
               LEFT JOIN roles ON employees.role_id = roles.id 
-              LEFT JOIN departments ON roles.department_id = departments.id`;
+              LEFT JOIN departments ON roles.department_id = departments.id
+              LEFT JOIN employees manager on manager.id = employees.manager_id;`;
   db.query(sql, (err, res) => {
     if (err) throw err;
     console.table(res);
     startPrompt();
   });
 };
+
+
+// Functions to add entry for departments, roles, and employees 
 
 function addDepartment() {
   inquirer
@@ -115,12 +115,9 @@ function addDepartment() {
     });
 }
 
-
-
 function addRole() {
 
   const sql = `SELECT departments.department_name FROM departments`;
-
   db.query(sql, (err, res) => {
     if (err) throw err;
     departmentChoices = res.map(obj => obj.department_name)
@@ -168,17 +165,16 @@ function addRole() {
   });
 }
 
-
 function addEmployee() {
 
   const sql_roles = `SELECT roles.title FROM roles`;
-
   db.query(sql_roles, (err, res) => {
     if (err) throw err;
     roleChoices = res.map(obj => obj.title)
 
-    const sql_employees = `SELECT employees.id, employees.first_name, employees.last_name FROM employees`;
-
+    const sql_employees = `SELECT employees.id, 
+                                  employees.first_name, 
+                                  employees.last_name FROM employees`;
     db.query(sql_employees, (err, res) => {
       if (err) throw err;
       managerChoices = res.map(obj => obj.first_name + " " + obj.last_name)
@@ -221,37 +217,78 @@ function addEmployee() {
 
                   const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`;
                   const values = [answer.newEmployeeFirstName, answer.newEmployeeLastName, roleId, managerId]
-
                   db.query(sql, values, (err, res) => {
                     if (err) throw err;
                     console.log(answer.newRole + ` added`);
                     viewEmployees();
 
                   });
-                } else {
-                  console.log('error')
-                }
-
+                } else { }
               }
-
-            } else {
-
-            }
+            } else { }
           }
-
-
-
-
-
         })
     })
   })
-
 }
 
+// Function to update role of employee
 
 function updateEmployee() {
+  const sql_employees = `SELECT employees.id, 
+                                employees.first_name, 
+                                employees.last_name FROM employees`;
+  db.query(sql_employees, (err, res) => {
+    if (err) throw err;
+    employeeChoices = res.map(obj => obj.first_name + " " + obj.last_name);
+    employeesTable = res;
 
+    const sql_roles = `SELECT roles.title FROM roles`;
+    db.query(sql_roles, (err, res) => {
+      if (err) throw err;
+      roleChoices = res.map(obj => obj.title)
+
+      inquirer
+        .prompt([
+          {
+            name: 'pickEmployee',
+            type: 'list',
+            message: 'Pick employee to edit',
+            choices: employeeChoices
+          },
+          {
+            name: 'updatedEmployeeRole',
+            type: 'list',
+            message: 'Pick the role of the employee',
+            choices: roleChoices
+          },
+        ])
+        .then((answer) => {
+          for (i = 0; i < employeesTable.length; i++) {
+            if (answer.pickEmployee == (employeesTable[0].first_name + " " + employeesTable[0].last_name)) {
+
+              var employeeId = i + 1
+
+              for (i = 0; i < roleChoices.length; i++) {
+
+                if (roleChoices[i] == answer.updatedEmployeeRole) {
+                  var roleId = i + 1
+                  updatedEmployeeInfo = [roleId, employeeId];
+                  const sql = `UPDATE employees SET employees.role_id = ? WHERE id= ?`
+                  db.query(sql, updatedEmployeeInfo, (err, res) => {
+                    if (err) throw err;
+                    viewEmployees();
+                  })
+                } else { }
+              }
+
+            } else { }
+
+          }
+
+        });
+    })
+  })
 }
 
 // Start server after DB connection
