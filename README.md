@@ -7,7 +7,8 @@ CLI app that hosts database of employee, role and department info. App allows us
 * Javascript
 * Node.js
 * Inquirer
-* SQL
+* SQL2
+* console.table 
 
 ## Preview
 

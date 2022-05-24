@@ -1,6 +1,7 @@
 const inquirer = require("inquirer");
 const db = require('./db/connection');
 
+// Prompt for main menu
 const startPrompt = () => {
   inquirer
     .prompt([
@@ -106,13 +107,13 @@ function addDepartment() {
       }
     ])
     .then((answer) => {
-      const sql = `INSERT INTO departments (name) VALUES (?)`;
+      const sql = `INSERT INTO departments (department_name) VALUES (?)`;
       db.query(sql, answer.newDepartment, (err, res) => {
         if (err) throw err;
         console.log(answer.newDepartment + ` added`);
         viewDepartments();
       });
-    });
+    }); //End of then
 }
 
 function addRole() {
@@ -157,11 +158,9 @@ function addRole() {
               viewRoles();
 
             });
-          } else { }
-
-        }
-
-      });
+          } else { };
+        };
+      }); //End of then
   });
 }
 
@@ -178,6 +177,7 @@ function addEmployee() {
     db.query(sql_employees, (err, res) => {
       if (err) throw err;
       managerChoices = res.map(obj => obj.first_name + " " + obj.last_name)
+      managerChoices.push("None");
 
       inquirer
         .prompt([
@@ -212,9 +212,21 @@ function addEmployee() {
 
               for (i = 0; i < roleChoices.length; i++) {
                 if (roleChoices[i] == answer.newEmployeeRole) {
-
                   var roleId = i + 1
-
+                  const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`;
+                  const values = [answer.newEmployeeFirstName, answer.newEmployeeLastName, roleId, managerId]
+                  db.query(sql, values, (err, res) => {
+                    if (err) throw err;
+                    console.log(answer.newRole + ` added`);
+                    viewEmployees();
+                  });
+                } else { }
+              }
+            } else if (answer.newEmployeeManager == "None") {
+              managerId = null
+              for (i = 0; i < roleChoices.length; i++) {
+                if (roleChoices[i] == answer.newEmployeeRole) {
+                  var roleId = i + 1
                   const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`;
                   const values = [answer.newEmployeeFirstName, answer.newEmployeeLastName, roleId, managerId]
                   db.query(sql, values, (err, res) => {
@@ -223,11 +235,11 @@ function addEmployee() {
                     viewEmployees();
 
                   });
-                } else { }
-              }
-            } else { }
-          }
-        })
+                } else { };
+              };
+            } else { };
+          };
+        }); //End of then
     })
   })
 }
@@ -246,7 +258,7 @@ function updateEmployee() {
     const sql_roles = `SELECT roles.title FROM roles`;
     db.query(sql_roles, (err, res) => {
       if (err) throw err;
-      roleChoices = res.map(obj => obj.title)
+      roleChoices = res.map(obj => obj.title);
 
       inquirer
         .prompt([
@@ -266,27 +278,22 @@ function updateEmployee() {
         .then((answer) => {
           for (i = 0; i < employeesTable.length; i++) {
             if (answer.pickEmployee == (employeesTable[0].first_name + " " + employeesTable[0].last_name)) {
-
               var employeeId = i + 1
 
               for (i = 0; i < roleChoices.length; i++) {
-
                 if (roleChoices[i] == answer.updatedEmployeeRole) {
-                  var roleId = i + 1
+                  var roleId = i + 1;
                   updatedEmployeeInfo = [roleId, employeeId];
                   const sql = `UPDATE employees SET employees.role_id = ? WHERE id= ?`
                   db.query(sql, updatedEmployeeInfo, (err, res) => {
                     if (err) throw err;
                     viewEmployees();
-                  })
-                } else { }
-              }
-
-            } else { }
-
+                  });
+                } else { };
+              };
+            } else { };
           }
-
-        });
+        }); //End of then
     })
   })
 }
