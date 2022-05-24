@@ -11,7 +11,7 @@ CLI app that hosts database of employee, role and department info. App allows us
 * console.table 
 
 ## Preview
-
+https://user-images.githubusercontent.com/70418455/169937236-e039c5bd-27f7-486e-97ff-88eabe4fd7f0.mov
 
 ## Contribution
 Made by infojunkie01
